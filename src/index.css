@@ -8,3 +8,9 @@ html {
   scroll-behavior: smooth;
   scroll-padding-top: 76px;
 }
+
+/* دکمه‌ها و لینک‌هایی که به بخش دیگری می‌برن، موقع hover کمی بزرگ می‌شن */
+.hover-grow{cursor:pointer;transition:transform .2s cubic-bezier(.2,.8,.2,1),filter .2s,background-color .2s,color .2s,opacity .2s}
+@media (hover:hover){.hover-grow:hover{transform:scale(1.07)}}
+.hover-grow:active{transform:scale(.97)}
+@media (prefers-reduced-motion:reduce){.hover-grow:hover{transform:none}}

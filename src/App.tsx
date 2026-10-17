@@ -101,6 +101,7 @@ const AVG_DAILY_HOURS = round1(WEEK_TOTAL_HOURS / STUDY_DAYS.length)
 // لیست کامل امکانات
 const S1_FEATURES = [
   'برنامه اختصاصی مطالعه (هفتگی و ماهانه)',
+  'برنامه‌ریزی با ساعت مدرسه، کلاس و تعهدات خودت (دهم تا دوازدهم و پشت‌کنکور)',
   'مشاوره‌ی دقیق، متناسب با شرایط خودت',
   'تماس هفتگی و پیگیری روند مطالعه',
   'بررسی گزارشکار روزانه (تست، ساعت مطالعه، خواب، استراحت، گوشی)',
@@ -117,13 +118,16 @@ const S2_FEATURES = [
 ]
 const S3_FEATURES = [
   ...S2_FEATURES,
-  'رفع اشکال',
+  'رفع اشکال تخصصی سوال‌های درسی: عکس سوال رو می‌فرستی، راه‌حل و نکته‌ش رو می‌گیری',
+  'ریشه‌یابی غلط‌های تکراری: مفهومی بوده، تستی بوده یا زمان‌بندی',
+  'رفع اشکال برنامه: اگه عقب موندی، با هم دوباره می‌چینیمش',
+  'رفع اشکال روش مطالعه و مدیریت زمان',
 ]
 
 const PLANS = [
   { id: 's1' as PlanId, name: 'سطح ۱', subtitle: 'مشاوره شخصی‌سازی‌شده + پیگیری هفتگی', price: '۱.۸', features: S1_FEATURES },
   { id: 's2' as PlanId, name: 'سطح ۲', subtitle: 'سطح ۱ + آزمون‌های هفتگی شخصی‌سازی‌شده', price: '۲.۴', features: S2_FEATURES, best: true },
-  { id: 's3' as PlanId, name: 'سطح ۳', subtitle: 'سطح ۲ + رفع اشکال', price: '۳.۲', features: S3_FEATURES },
+  { id: 's3' as PlanId, name: 'سطح ۳', subtitle: 'سطح ۲ + رفع اشکال تخصصی درسی و برنامه', price: '۳.۲', features: S3_FEATURES },
 ]
 
 const SINGLE_SESSION = {
@@ -148,7 +152,7 @@ const REPORT_FIELDS = [
 const FAQS = [
   {
     q: 'سطوح دوره چه فرقی با هم دارن؟',
-    a: 'سطح ۱ شامل برنامه اختصاصی، مشاوره‌ی دقیق، تماس هفتگی، گزارشکار روزانه، تحلیل آزمون، پیشنهاد دبیر، معرفی منابع و آموزش کامل مسیر کنکوره. سطح ۲ همه‌ی این‌ها رو داره، به‌علاوه‌ی آزمون‌های هفتگی شخصی‌سازی‌شده. سطح ۳ هم علاوه بر امکانات سطح ۱ و ۲، رفع اشکال داره.',
+    a: 'سطح ۱ شامل برنامه اختصاصی، مشاوره‌ی دقیق، تماس هفتگی، گزارشکار روزانه، تحلیل آزمون، پیشنهاد دبیر، معرفی منابع و آموزش کامل مسیر کنکوره. سطح ۲ همه‌ی این‌ها رو داره، به‌علاوه‌ی آزمون‌های هفتگی شخصی‌سازی‌شده. سطح ۳ هم علاوه بر امکانات سطح ۱ و ۲، رفع اشکال تخصصی داره: سوال درسی، غلط‌های تکراری، برنامه و روش مطالعه.',
   },
   {
     q: 'قیمت‌ها چقدره؟',
@@ -161,6 +165,10 @@ const FAQS = [
   {
     q: 'گزارشکار روزانه شامل چه چیزهایی می‌شه؟',
     a: 'تعداد تست و ساعت مطالعه‌ی هر درس، ساعت خواب و بیداری، ساعت‌های مطالعه و استراحت، و تایم استفاده از گوشی.',
+  },
+  {
+    q: 'اگه مدرسه می‌رم یا کلاس دارم، برنامه چطور نوشته می‌شه؟',
+    a: 'تو فرم شناخت، ساعت مدرسه، کلاس‌ها و تعهدات هفته‌ات رو می‌نویسی و برنامه دقیقاً دور اون‌ها چیده می‌شه. این فقط برای پشت‌کنکوری‌ها نیست و برای دهم، یازدهم و دوازدهم هم کار می‌کنه.',
   },
   {
     q: 'برنامه برای کدوم درس‌هاست؟',
@@ -265,7 +273,7 @@ export default function App() {
       {/* NAV */}
       <nav className={`fixed top-0 inset-x-0 z-50 transition-colors duration-300 border-b ${scrolled > 20 || mobileMenu ? 'bg-[#07070A]/90 backdrop-blur-xl border-white/10' : 'bg-transparent border-transparent'}`}>
         <div className="max-w-[1280px] mx-auto px-5 lg:px-8 h-[68px] flex items-center justify-between gap-4">
-          <a href="#top" className="flex items-center gap-3 min-w-0">
+          <a href="#top" className="flex items-center gap-3 min-w-0 hover-grow">
             <Avatar small className="w-9 h-9 shrink-0 rounded-full border border-white/20" />
             <div className="min-w-0">
               <div className="text-[13px] font-black leading-none">علیرضا غلامی</div>
@@ -275,15 +283,15 @@ export default function App() {
 
           <div className="hidden lg:flex items-center gap-7 text-[13px]">
             {NAV_LINKS.map(([h, l]) => (
-              <a key={h} href={h} className="opacity-70 hover:opacity-100 transition">{l}</a>
+              <a key={h} href={h} className="opacity-70 hover:opacity-100 hover-grow">{l}</a>
             ))}
-            <a href={EXAM_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 border border-accent/40 text-accent px-4 py-1.5 rounded-full font-bold hover:bg-accent hover:text-black transition">
+            <a href={EXAM_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 border border-accent/40 text-accent px-4 py-1.5 rounded-full font-bold hover:bg-accent hover:text-black hover-grow">
               آزمون <span aria-hidden>↗</span>
             </a>
           </div>
 
           <div className="flex items-center gap-2.5">
-            <a href="#contact" className="hidden sm:inline-flex bg-accent text-black px-5 py-2.5 rounded-full text-sm font-black hover:brightness-110 transition">درخواست مشاوره</a>
+            <a href="#contact" className="hidden sm:inline-flex bg-accent text-black px-5 py-2.5 rounded-full text-sm font-black hover:brightness-110 hover-grow">درخواست مشاوره</a>
             <button
               onClick={() => setMobileMenu(!mobileMenu)}
               className="lg:hidden w-10 h-10 grid place-items-center border border-white/15 rounded-full"
@@ -303,12 +311,12 @@ export default function App() {
           <div className="lg:hidden border-t border-white/10 bg-[#0B0B10]">
             <div className="max-w-[1280px] mx-auto px-5 py-2 flex flex-col">
               {[...NAV_LINKS, ['#contact', 'درخواست مشاوره'] as [string, string]].map(([h, l]) => (
-                <a key={h} href={h} onClick={() => setMobileMenu(false)} className="flex items-center justify-between py-4 border-b border-white/5 text-[15px] font-bold">
+                <a key={h} href={h} onClick={() => setMobileMenu(false)} className="flex items-center justify-between py-4 border-b border-white/5 text-[15px] font-bold hover-grow">
                   {l}
                   <span className="opacity-30" aria-hidden>‹</span>
                 </a>
               ))}
-              <a href={EXAM_URL} target="_blank" rel="noreferrer" onClick={() => setMobileMenu(false)} className="my-4 flex items-center justify-between rounded-2xl bg-accent text-black px-5 py-4 font-black">
+              <a href={EXAM_URL} target="_blank" rel="noreferrer" onClick={() => setMobileMenu(false)} className="my-4 flex items-center justify-between rounded-2xl bg-accent text-black px-5 py-4 font-black hover-grow">
                 ورود به آزمون <span aria-hidden>↗</span>
               </a>
             </div>
@@ -334,8 +342,8 @@ export default function App() {
                 هر شب گزارشکار روزانه‌ات رو می‌فرستی؛ من هم بررسیش می‌کنم، ایرادها رو مشخص می‌کنیم و درست می‌شن. آخر هفته هم یه آزمون می‌گیریم تا مهارت‌هات رو بسنجیم و بالاتر ببریم.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row gap-3">
-                <a href="#contact" className="bg-accent text-black px-7 py-3.5 rounded-full font-black text-sm text-center hover:brightness-110 transition">درخواست مشاوره ←</a>
-                <a href="#plans" className="border border-white/20 px-7 py-3.5 rounded-full font-bold text-sm text-center hover:bg-white hover:text-black transition">دیدن سطوح دوره</a>
+                <a href="#contact" className="bg-accent text-black px-7 py-3.5 rounded-full font-black text-sm text-center hover:brightness-110 hover-grow">درخواست مشاوره ←</a>
+                <a href="#plans" className="border border-white/20 px-7 py-3.5 rounded-full font-bold text-sm text-center hover:bg-white hover:text-black hover-grow">دیدن سطوح دوره</a>
               </div>
               <div className="mt-10 pt-6 border-t border-white/10 flex flex-wrap gap-x-6 gap-y-2 text-xs opacity-70">
                 <span>رتبه ۳۴۲ منطقه یک تجربی ۱۴۰۴</span>
@@ -417,7 +425,7 @@ export default function App() {
                   <div className="font-black">یه هفته از برنامه رو ببین</div>
                   <div className="text-xs opacity-60 mt-1">ساعت‌بندی، منبع و حجم هر درس</div>
                 </div>
-                <a href="#sample" className="bg-accent text-black px-5 py-3 rounded-full text-xs font-black">مشاهده ↓</a>
+                <a href="#sample" className="bg-accent text-black px-5 py-3 rounded-full text-xs font-black hover-grow">مشاهده ↓</a>
               </div>
             </Reveal>
           </div>
@@ -470,7 +478,7 @@ export default function App() {
                         )
                       })}
                     </div>
-                    <button onClick={() => { setSelectedPlan(plan.id); document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }) }} className={`mt-8 w-full py-4 rounded-full font-black text-sm transition hover:scale-[0.98] ${plan.best ? 'bg-accent text-black' : 'bg-white text-black'}`}>
+                    <button onClick={() => { setSelectedPlan(plan.id); document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }) }} className={`mt-8 w-full py-4 rounded-full font-black text-sm hover-grow ${plan.best ? 'bg-accent text-black' : 'bg-white text-black'}`}>
                       انتخاب {plan.name} ←
                     </button>
                   </div>
@@ -478,6 +486,39 @@ export default function App() {
               </Reveal>
             ))}
           </div>
+
+          {/* S3 showcase */}
+          <Reveal>
+            <div className="mt-8 rounded-[32px] border border-accent/30 bg-[#0F0F14] p-7 lg:p-10">
+              <div className="inline-flex text-[11px] bg-accent text-black px-3 py-1 rounded-full font-black">ویژه سطح ۳</div>
+              <h3 className="mt-4 text-2xl lg:text-3xl font-black leading-tight">رفع اشکال؛ <span className="text-accent">گیر کردی، رها نمی‌شی</span></h3>
+              <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                  ['سوال درسی', 'عکس سوال رو می‌فرستی؛ راه‌حل مرحله‌به‌مرحله و نکته‌ی تستی‌ش رو می‌گیری.'],
+                  ['غلط‌های تکراری', 'پیدا می‌کنیم مشکل از مفهومه، از تست زدنه یا از زمان.'],
+                  ['برنامه', 'هفته خراب شد؟ برنامه رو با شرایط واقعی‌ت دوباره می‌چینیم.'],
+                  ['روش مطالعه', 'مرور، تست و مدیریت زمانت رو اصلاح می‌کنیم.'],
+                ].map(([t, d]) => (
+                  <div key={t} className="bg-white/[0.04] border border-white/10 rounded-3xl p-5">
+                    <div className="font-black text-sm text-accent">{t}</div>
+                    <p className="mt-2 text-xs leading-6 opacity-70">{d}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6 grid lg:grid-cols-[1fr_1.2fr] gap-4 items-stretch">
+                <div className="rounded-3xl bg-accent text-black p-6">
+                  <div className="text-xs opacity-70">نمونه، یه رفع اشکال واقعی چه شکلیه؟</div>
+                  <p className="mt-3 text-sm font-black leading-7">سوال رو می‌فرستی، فقط جواب نمی‌گیری؛ دلیل اشتباهت رو هم می‌فهمی.</p>
+                  <p className="mt-3 text-xs leading-6 opacity-80">این فقط یه نمونه‌ی ساده‌ست؛ برای هر درس و هر سوالی همین مسیر رو می‌ریم.</p>
+                </div>
+                <div className="rounded-3xl bg-white/[0.04] border border-white/10 p-5 space-y-3 text-[13px] leading-6">
+                  <div className="max-w-[85%] bg-white text-black rounded-2xl rounded-tr-sm px-4 py-3">این تست شیمی رو دوبار حل کردم و هر دفعه گزینه‌ی ۲ می‌شه. کجاش رو اشتباه می‌رم؟ 📷</div>
+                  <div className="max-w-[90%] mr-auto bg-accent/15 border border-accent/30 rounded-2xl rounded-tl-sm px-4 py-3">راه‌حلت تا نصفه درسته. جایی که جرم مولی رو حساب کردی، میانگین ایزوتوپ‌ها رو نگرفتی. بیا قدم‌به‌قدم بریم؛ آخرش یه نکته‌ی تستی هم برات می‌نویسم که دفعه‌ی بعد تو ثانیه‌ها حلش کنی.</div>
+                  <div className="max-w-[70%] bg-white text-black rounded-2xl rounded-tr-sm px-4 py-3">آهان فهمیدم! 🙏</div>
+                </div>
+              </div>
+            </div>
+          </Reveal>
 
           {/* Single session */}
           <Reveal>
@@ -495,7 +536,7 @@ export default function App() {
                     <div className="text-xs opacity-60">مدت جلسه: {SINGLE_SESSION.duration}</div>
                     <div className="text-3xl font-black mt-1">{toFa(SINGLE_SESSION.price)} هزار تومان</div>
                   </div>
-                  <button onClick={() => { setSelectedPlan('single'); document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }) }} className="bg-white text-black px-6 py-3 rounded-full font-black text-sm">
+                  <button onClick={() => { setSelectedPlan('single'); document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }) }} className="bg-white text-black px-6 py-3 rounded-full font-black text-sm hover-grow">
                     رزرو جلسه ←
                   </button>
                 </div>
@@ -753,7 +794,7 @@ export default function App() {
                 </div>
               </div>
 
-              <a href="#contact" className="mt-8 inline-flex bg-white text-black px-6 py-3.5 rounded-full font-black text-sm">درخواست مشاوره ←</a>
+              <a href="#contact" className="mt-8 inline-flex bg-white text-black px-6 py-3.5 rounded-full font-black text-sm hover-grow">درخواست مشاوره ←</a>
             </div>
           </Reveal>
         </div>
@@ -846,7 +887,7 @@ export default function App() {
                   پیش‌نمایش پیام و ارسال در تلگرام ←
                 </button>
                 <div className="text-center text-[11px] opacity-60">
-                  یا مستقیم به <a href={TELEGRAM_URL} target="_blank" rel="noreferrer" dir="ltr" className="underline font-bold">@{TELEGRAM_ID}</a> پیام بده
+                  یا مستقیم به <a href={TELEGRAM_URL} target="_blank" rel="noreferrer" dir="ltr" className="underline font-bold hover-grow inline-block">@{TELEGRAM_ID}</a> پیام بده
                 </div>
               </div>
             </div>
@@ -875,7 +916,7 @@ export default function App() {
                   <div className="font-black text-sm">علیرضا غلامی</div>
                   <div className="text-xs opacity-60">مشاوره تخصصی کنکور</div>
                 </div>
-                <a href={TELEGRAM_URL} target="_blank" rel="noreferrer" className="mr-auto bg-[#2AABEE] text-white px-4 py-2 rounded-full text-xs font-black">تلگرام</a>
+                <a href={TELEGRAM_URL} target="_blank" rel="noreferrer" className="mr-auto bg-[#2AABEE] text-white px-4 py-2 rounded-full text-xs font-black hover-grow">تلگرام</a>
               </div>
             </div>
           </Reveal>
@@ -905,9 +946,9 @@ export default function App() {
         <div className="max-w-[1280px] mx-auto px-6 lg:px-8 flex flex-wrap gap-6 items-center justify-between text-xs opacity-60">
           <div>© ۱۴۰۵ علیرضا غلامی — مشاوره تخصصی کنکور</div>
           <div className="flex flex-wrap gap-4 items-center">
-            <a href="#plans" className="hover:opacity-100">سطوح دوره</a><span>•</span>
-            <a href={EXAM_URL} target="_blank" rel="noreferrer" className="hover:opacity-100">آزمون</a><span>•</span>
-            <a href="#faq" className="hover:opacity-100">سوالات متداول</a><span>•</span>
+            <a href="#plans" className="hover:opacity-100 hover-grow">سطوح دوره</a><span>•</span>
+            <a href={EXAM_URL} target="_blank" rel="noreferrer" className="hover:opacity-100 hover-grow">آزمون</a><span>•</span>
+            <a href="#faq" className="hover:opacity-100 hover-grow">سوالات متداول</a><span>•</span>
             <a href={TELEGRAM_URL} target="_blank" rel="noreferrer" dir="ltr" className="underline">@{TELEGRAM_ID}</a>
           </div>
         </div>

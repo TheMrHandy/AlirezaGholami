@@ -15,137 +15,105 @@ const NAV_LINKS: [string, string][] = [
 
 type PlanId = 'single' | 's1' | 's2' | 's3'
 
-type SubjectKey = 'zist' | 'shimi' | 'riazi' | 'fizik' | 'zamin' | 'omumi'
-
-const SUBJECTS: Record<SubjectKey, { label: string; bar: string; chip: string; dot: string; text: string; color: string }> = {
-  zist:   { label: 'زیست',     bar: 'bg-emerald-500',   chip: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30', dot: 'bg-emerald-500',   text: 'text-emerald-400',   color: 'emerald' },
-  shimi:  { label: 'شیمی',     bar: 'bg-cyan-500',      chip: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30',           dot: 'bg-cyan-500',      text: 'text-cyan-400',      color: 'cyan'    },
-  riazi:  { label: 'ریاضی',    bar: 'bg-indigo-500',    chip: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30',     dot: 'bg-indigo-500',    text: 'text-indigo-400',    color: 'indigo'  },
-  fizik:  { label: 'فیزیک',    bar: 'bg-amber-500',     chip: 'bg-amber-500/15 text-amber-300 border-amber-500/30',        dot: 'bg-amber-500',     text: 'text-amber-400',     color: 'amber'   },
-  zamin:  { label: 'زمین',     bar: 'bg-lime-500',      chip: 'bg-lime-500/15 text-lime-300 border-lime-500/30',           dot: 'bg-lime-500',      text: 'text-lime-400',      color: 'lime'    },
-  omumi:  { label: 'عمومی',    bar: 'bg-fuchsia-500',   chip: 'bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/30',  dot: 'bg-fuchsia-500',   text: 'text-fuchsia-400',   color: 'fuchsia' },
-}
-
-const toFa = (v: number | string) => String(v).replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)])
+const toFa = (v: number | string) =>
+  String(v)
+    .replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)])
+    .replace(/([۰-۹])\.([۰-۹])/g, '$1٫$2')
 const round1 = (n: number) => Math.round(n * 10) / 10
 
-// نمونه هفته — ساعت‌ها بین ۱۰ تا ۱۱ ساعت، دروس کامل
-type DayBlock = { subject: SubjectKey; hours: number }
-type DayRow = { day: string; wake: string; start: string; blocks: DayBlock[]; sleep: string; phone: number }
+// نمونه‌ی یک هفته: شنبه تا پنجشنبه درس و تست، جمعه روز مرور
+const STUDY_DAYS = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه']
+const ALL_DAYS = [...STUDY_DAYS, 'جمعه']
+const FRIDAY_INDEX = STUDY_DAYS.length
+const MAX_BLOCK_HOURS = 3
 
-const SAMPLE_WEEK: DayRow[] = [
+type SubjectPlan = { label: string; hours: number[]; details: [string, string][] }
+
+// hours: ساعت مطالعه‌ی هر درس از شنبه تا پنجشنبه
+const SUBJECT_PLANS: SubjectPlan[] = [
   {
-    day: 'شنبه',
-    wake: '۶:۰۰',
-    start: '۷:۰۰',
-    sleep: '۲۳:۳۰',
-    phone: 1.2,
-    blocks: [
-      { subject: 'zist',  hours: 2.5 },
-      { subject: 'shimi', hours: 2.0 },
-      { subject: 'riazi', hours: 2.5 },
-      { subject: 'omumi', hours: 3.0 },
+    label: 'زیست‌شناسی',
+    hours: [3, 3, 3, 3, 3, 3],
+    details: [
+      ['منبع', 'کتاب درسی زیست دهم + کتاب تست'],
+      ['حجم هفته', 'فصل ۲ (اتمام) و گفتار ۱ فصل ۳'],
+      ['مطالعه', 'اول نکته‌های فصل ۲ رو کامل کن، بعد برو سراغ گفتار ۱ فصل ۳'],
+      ['تست', 'تست فصل ۲ و گفتار ۱ فصل ۳'],
+      ['مرور', 'نکته‌های نشان‌دار و تحلیل تست‌ها'],
+      ['نکته', 'بخش‌های سخت رو علامت بزن تا جمعه دوباره مرورشون کنی.'],
     ],
   },
   {
-    day: 'یکشنبه',
-    wake: '۶:۰۰',
-    start: '۷:۰۰',
-    sleep: '۲۳:۳۰',
-    phone: 1.3,
-    blocks: [
-      { subject: 'zist',  hours: 2.5 },
-      { subject: 'shimi', hours: 2.0 },
-      { subject: 'fizik', hours: 2.5 },
-      { subject: 'zamin', hours: 1.5 },
-      { subject: 'omumi', hours: 2.0 },
+    label: 'شیمی',
+    hours: [3, 3, 3, 3, 2.5, 2.5],
+    details: [
+      ['منبع', 'کتاب درسی شیمی دهم + تست‌های مبتکران'],
+      ['حجم هفته', 'فصل ۱ تا صفحه ۳۰ کتاب درسی'],
+      ['مطالعه', 'متن و مثال‌های کتاب رو بخون و تا صفحه ۳۰ جلو برو'],
+      ['تست', 'تست‌های مبتکران، فقط از محدوده‌ای که خوندی'],
+      ['مرور', 'نکته‌ها و تست‌های غلط'],
+      ['نکته', 'تست‌ها رو با صفحه‌هایی که خوندی هماهنگ بزن و بعدش تحلیلشون کن.'],
     ],
   },
   {
-    day: 'دوشنبه',
-    wake: '۶:۱۵',
-    start: '۷:۱۵',
-    sleep: '۲۳:۴۵',
-    phone: 1.0,
-    blocks: [
-      { subject: 'riazi', hours: 2.5 },
-      { subject: 'zist',  hours: 2.0 },
-      { subject: 'shimi', hours: 2.5 },
-      { subject: 'fizik', hours: 2.0 },
-      { subject: 'zamin', hours: 1.0 },
-      { subject: 'omumi', hours: 0.5 },
+    label: 'فیزیک',
+    hours: [2.5, 2.5, 2, 2, 2.5, 2.5],
+    details: [
+      ['منبع', 'تدریس شجاعی + کتاب درسی فیزیک دهم + کتاب کمک‌درسی'],
+      ['حجم هفته', 'فصل ۲ کامل'],
+      ['مطالعه', 'فصل رو همراه شجاعی جلو ببر و تمرین‌ها رو حل کن'],
+      ['تست', 'تست‌های کتاب کمک‌درسی از فصل ۲'],
+      ['مرور', 'روش حل و تست‌های نشان‌دار'],
+      ['نکته', 'بعد از هر بخش تست بزن و راه‌حلت رو تحلیل کن.'],
     ],
   },
   {
-    day: 'سه‌شنبه',
-    wake: '۶:۰۰',
-    start: '۷:۰۰',
-    sleep: '۲۳:۳۰',
-    phone: 1.4,
-    blocks: [
-      { subject: 'fizik', hours: 2.5 },
-      { subject: 'zist',  hours: 2.5 },
-      { subject: 'riazi', hours: 2.0 },
-      { subject: 'shimi', hours: 2.0 },
-      { subject: 'omumi', hours: 1.5 },
-    ],
-  },
-  {
-    day: 'چهارشنبه',
-    wake: '۶:۱۵',
-    start: '۷:۱۵',
-    sleep: '۲۳:۳۰',
-    phone: 1.1,
-    blocks: [
-      { subject: 'zamin', hours: 1.5 },
-      { subject: 'shimi', hours: 2.5 },
-      { subject: 'fizik', hours: 2.5 },
-      { subject: 'zist',  hours: 2.0 },
-      { subject: 'riazi', hours: 2.0 },
-    ],
-  },
-  {
-    day: 'پنجشنبه',
-    wake: '۶:۳۰',
-    start: '۷:۳۰',
-    sleep: '۰۰:۰۰',
-    phone: 1.5,
-    blocks: [
-      { subject: 'riazi', hours: 2.5 },
-      { subject: 'zist',  hours: 2.0 },
-      { subject: 'shimi', hours: 2.0 },
-      { subject: 'fizik', hours: 2.0 },
-      { subject: 'zamin', hours: 1.0 },
-      { subject: 'omumi', hours: 1.0 },
+    label: 'ریاضی',
+    hours: [2, 2, 2.5, 2.5, 2.5, 2.5],
+    details: [
+      ['منبع', 'تدریس ملاکپور'],
+      ['حجم هفته', 'تابع، معادله و نامعادله'],
+      ['مطالعه', 'هر مبحثی که تدریس شد رو تمرین کن و جلو برو'],
+      ['تست', 'تست‌هایی که میزان یادگیری‌ات از این مباحث رو می‌سنجه'],
+      ['مرور', 'سوال‌های سخت و غلط‌های تکراری'],
+      ['نکته', 'اول خودت حل کن، بعد با روش تدریس مقایسه‌ش کن.'],
     ],
   },
 ]
 
-const dayTotalHours = (d: DayRow) => round1(d.blocks.reduce((a, b) => a + b.hours, 0))
-const subjectTotals = (key: SubjectKey) =>
-  SAMPLE_WEEK.reduce((a, d) => a + (d.blocks.find((b) => b.subject === key)?.hours ?? 0), 0)
+const FRIDAY_PLAN = {
+  steps: ['مرور مطالب شنبه تا پنجشنبه', 'تحلیل تست‌های غلط و نشان‌دار', 'آزمون آخر هفته', 'برنامه‌ی هفته‌ی بعد'],
+  details: [
+    ['حجم', 'همه‌ی مطالبی که از شنبه تا پنجشنبه خوندی'],
+    ['مرور', 'نکته‌های چهار درس رو جمع‌بندی کن'],
+    ['نقطه‌ضعف‌ها', 'موارد ناقص و جاهایی که عقب موندی رو مشخص کن'],
+    ['تست', 'تست‌های غلط و نشان‌دار هفته رو تحلیل کن'],
+    ['آزمون', 'آزمون آخر هفته برای سنجش و بالا بردن مهارت‌هات'],
+    ['هفته بعد', 'برنامه‌ی هفته‌ی بعد رو با هم می‌چینیم'],
+  ] as [string, string][],
+}
 
-const WEEK_TOTAL_HOURS = round1(SAMPLE_WEEK.reduce((a, d) => a + dayTotalHours(d), 0))
-const AVG_DAILY_HOURS = round1(WEEK_TOTAL_HOURS / SAMPLE_WEEK.length)
-const AVG_PHONE = round1(SAMPLE_WEEK.reduce((acc, d) => acc + d.phone, 0) / SAMPLE_WEEK.length)
-const MAX_SUBJ_HOURS = Math.max(...(Object.keys(SUBJECTS) as SubjectKey[]).map(subjectTotals))
+const subjectTotal = (s: SubjectPlan) => round1(s.hours.reduce((a, b) => a + b, 0))
+const dayTotal = (i: number) => round1(SUBJECT_PLANS.reduce((a, s) => a + s.hours[i], 0))
+const WEEK_TOTAL_HOURS = round1(STUDY_DAYS.reduce((a, _d, i) => a + dayTotal(i), 0))
+const AVG_DAILY_HOURS = round1(WEEK_TOTAL_HOURS / STUDY_DAYS.length)
 
 // لیست کامل امکانات
 const S1_FEATURES = [
   'برنامه اختصاصی مطالعه (هفتگی و ماهانه)',
-  'مشاوره دقیق و شخصی‌سازی‌شده بر اساس شرایط دانش‌آموز',
+  'مشاوره‌ی دقیق، متناسب با شرایط خودت',
   'تماس هفتگی و پیگیری روند مطالعه',
   'بررسی گزارشکار روزانه (تست، ساعت مطالعه، خواب، استراحت، گوشی)',
   'تحلیل آزمون‌های آزمایشی',
-  'پیشنهاد دبیر مناسب سطح دانش‌آموز',
+  'پیشنهاد دبیر مناسب سطح خودت',
   'معرفی منابع مفید و مناسب',
-  'آموزش کامل تمام مسیر کنکور از صفر',
+  'آموزش کامل مسیر کنکور، از صفر',
   'برنامه ویژه برای دروس عمومی و تخصصی',
 ]
 const S2_FEATURES = [
   ...S1_FEATURES,
   'آزمون‌های هفتگی شخصی‌سازی‌شده',
-  'طراحی سوالات آزمون بر اساس نقاط ضعف دانش‌آموز',
+  'سوال‌های آزمون بر اساس نقطه‌ضعف‌های خودت',
 ]
 const S3_FEATURES = [
   ...S2_FEATURES,
@@ -162,9 +130,9 @@ const SINGLE_SESSION = {
   duration: '۳۰ دقیقه',
   price: '۳۰۰',
   features: [
-    'بررسی وضعیت تحصیلی و هدف شما',
-    'بررسی روند مطالعه و پیشنهاد راهکار مشخص',
-    'معرفی سطح مناسب برای همکاری',
+    'بررسی وضعیت درسی و هدفت',
+    'بررسی روند مطالعه‌ات و پیشنهاد راهکار مشخص',
+    'معرفی سطح مناسب برای ادامه‌ی همکاری',
     'پاسخ به سوال‌های درسی و روش مطالعه',
   ],
 }
@@ -179,36 +147,36 @@ const REPORT_FIELDS = [
 
 const FAQS = [
   {
-    q: 'سطوح دوره چه تفاوتی با هم دارند؟',
-    a: 'سطح ۱ شامل برنامه اختصاصی، مشاوره دقیق و شخصی‌سازی‌شده، تماس هفتگی، گزارشکار روزانه، تحلیل آزمون، پیشنهاد دبیر، معرفی منابع و آموزش کامل مسیر کنکور است. سطح ۲ علاوه بر همه این موارد، آزمون‌های هفتگی شخصی‌سازی‌شده دارد و سطح ۳ علاوه بر امکانات سطح ۱ و ۲ شامل رفع اشکال می‌شود.',
+    q: 'سطوح دوره چه فرقی با هم دارن؟',
+    a: 'سطح ۱ شامل برنامه اختصاصی، مشاوره‌ی دقیق، تماس هفتگی، گزارشکار روزانه، تحلیل آزمون، پیشنهاد دبیر، معرفی منابع و آموزش کامل مسیر کنکوره. سطح ۲ همه‌ی این‌ها رو داره، به‌علاوه‌ی آزمون‌های هفتگی شخصی‌سازی‌شده. سطح ۳ هم علاوه بر امکانات سطح ۱ و ۲، رفع اشکال داره.',
   },
   {
-    q: 'قیمت‌ها چقدر است و تخفیف دارید؟',
-    a: 'قیمت‌ها ماهانه و بدون تخفیف است: سطح ۱ ماهانه ۱.۸ میلیون تومان، سطح ۲ ماهانه ۲.۴ میلیون تومان و سطح ۳ ماهانه ۳.۲ میلیون تومان. مشاوره تک‌جلسه ۳۰ دقیقه‌ای ۳۰۰ هزار تومان است.',
+    q: 'قیمت‌ها چقدره؟',
+    a: 'سطح ۱ ماهانه ۱٫۸ میلیون تومان، سطح ۲ ماهانه ۲٫۴ میلیون تومان و سطح ۳ ماهانه ۳٫۲ میلیون تومانه. مشاوره‌ی تک‌جلسه‌ی ۳۰ دقیقه‌ای هم ۳۰۰ هزار تومانه.',
   },
   {
-    q: 'مشاوره تک‌جلسه چیست؟',
-    a: 'یک جلسه ۳۰ دقیقه‌ای با هزینه ۳۰۰ هزار تومان که در آن وضعیت تحصیلی شما بررسی می‌شود و پاسخ سوال‌های درسی و روش مطالعه را دریافت می‌کنید.',
+    q: 'مشاوره تک‌جلسه چیه؟',
+    a: 'یه جلسه‌ی ۳۰ دقیقه‌ای با هزینه‌ی ۳۰۰ هزار تومان که توش وضعیت درسی‌ات بررسی می‌شه و جواب سوال‌های درسی و روش مطالعه‌ات رو می‌گیری.',
   },
   {
-    q: 'گزارشکار روزانه شامل چه مواردی است؟',
-    a: 'تعداد تست به تفکیک هر درس، ساعت مطالعه به تفکیک هر درس، ساعت خواب و بیداری، ساعت‌های مطالعه و استراحت، و تایم استفاده از گوشی.',
+    q: 'گزارشکار روزانه شامل چه چیزهایی می‌شه؟',
+    a: 'تعداد تست و ساعت مطالعه‌ی هر درس، ساعت خواب و بیداری، ساعت‌های مطالعه و استراحت، و تایم استفاده از گوشی.',
   },
   {
-    q: 'برنامه برای کدام دروس است؟',
-    a: 'در همه سطوح برنامه ویژه برای دروس عمومی و تخصصی (زیست، شیمی، ریاضی، فیزیک و زمین) ارائه می‌شود.',
+    q: 'برنامه برای کدوم درس‌هاست؟',
+    a: 'تو همه‌ی سطح‌ها برای دروس عمومی و تخصصی برنامه‌ی ویژه نوشته می‌شه.',
   },
   {
-    q: 'ساعت مطالعه چقدر است؟',
-    a: 'ساعت مطالعه به‌صورت تدریجی و پیوسته افزایش پیدا می‌کند و بر اساس سطح، پایه و توان دانش‌آموز قابل تنظیم است. نمونه برنامه‌ی سایت یک هفته‌ی میانی با ۱۰ تا ۱۱ ساعت مطالعه در روز است.',
+    q: 'ساعت مطالعه چقدره؟',
+    a: 'ساعت مطالعه کم‌کم و پیوسته بالا می‌ره و با توجه به سطح، پایه و توان خودت تنظیم می‌شه. تو نمونه برنامه‌ی سایت یه هفته‌ی میانی رو می‌بینی که روزی ۱۰٫۵ ساعت مطالعه داره.',
   },
   {
-    q: 'فرم سایت درخواست را مستقیم می‌فرستد؟',
-    a: 'خیر. فرم فقط متن پیام را آماده می‌کند. بعد از باز شدن تلگرام باید خودت دکمه ارسال را بزنی.',
+    q: 'فرم سایت درخواستم رو مستقیم می‌فرسته؟',
+    a: 'نه. فرم فقط متن پیام رو آماده می‌کنه. بعد از باز شدن تلگرام باید خودت دکمه‌ی ارسال رو بزنی.',
   },
   {
-    q: 'اگر برنامه اجرا نشد چه می‌شود؟',
-    a: 'در گزارشکارهای روزانه علت بررسی می‌شود و برنامه هفته بعد متناسب با شرایط واقعی تو بازنویسی می‌شود.',
+    q: 'اگه برنامه اجرا نشد چی می‌شه؟',
+    a: 'تو گزارشکارهای روزانه دلیلش رو بررسی می‌کنیم و برنامه‌ی هفته‌ی بعد رو با شرایط واقعی خودت می‌چینیم.',
   },
 ]
 
@@ -283,8 +251,6 @@ export default function App() {
 هدف و شرایط فعلی: ${form.goal}
 شماره تماس: ${form.phone}
 خدمت مورد نظر: ${planLabel}`
-
-  const day = SAMPLE_WEEK[sampleDay]
 
   return (
     <div id="top" className="min-h-screen bg-[#07070A] text-white selection:bg-accent selection:text-black overflow-x-hidden" style={{ fontFamily: 'Vazirmatn, sans-serif' }}>
@@ -362,10 +328,10 @@ export default function App() {
               <h1 className="mt-6 text-[34px] sm:text-[50px] lg:text-[62px] font-black leading-[1.2] tracking-tight">
                 برنامه‌ای که<br />
                 هر هفته با گزارش تو<br />
-                <span className="text-accent">دقیق‌تر می‌شود.</span>
+                <span className="text-accent">دقیق‌تر می‌شه.</span>
               </h1>
               <p className="mt-6 text-[15px] leading-8 opacity-65 max-w-[520px]">
-                هر شب گزارشکار روزانه‌ات را می‌فرستی؛ من هم هفته بعد، برنامه را بر اساس عددهای واقعی خودت بازنویسی می‌کنم.
+                هر شب گزارشکار روزانه‌ات رو می‌فرستی؛ من هم بررسیش می‌کنم، ایرادها رو مشخص می‌کنیم و درست می‌شن. آخر هفته هم یه آزمون می‌گیریم تا مهارت‌هات رو بسنجیم و بالاتر ببریم.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row gap-3">
                 <a href="#contact" className="bg-accent text-black px-7 py-3.5 rounded-full font-black text-sm text-center hover:brightness-110 transition">درخواست مشاوره ←</a>
@@ -390,7 +356,7 @@ export default function App() {
       {/* STRIP */}
       <div className="border-y border-white/10 bg-white/[0.02]">
         <div className="max-w-[1280px] mx-auto px-5 lg:px-8 py-4 grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-2.5 text-xs">
-          {['برنامه ویژه دروس عمومی و تخصصی', 'گزارشکار روزانه', 'تماس و پیگیری هفتگی', 'قیمت ماهانه و بدون تخفیف'].map((t) => (
+          {['برنامه ویژه دروس عمومی و تخصصی', 'گزارشکار روزانه', 'تماس و پیگیری هفتگی', 'قیمت ماهانه و شفاف'].map((t) => (
             <div key={t} className="flex items-center gap-2 opacity-80">
               <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-accent" />
               {t}
@@ -406,18 +372,15 @@ export default function App() {
             <div className="lg:sticky lg:top-28 h-fit">
               <div className="text-xs text-accent font-bold mb-4">روش کار</div>
               <h2 className="text-[32px] lg:text-[44px] font-black leading-[1.05]">
-                یک چرخه‌ی ساده که<br />
-                <span className="text-accent">هر هفته تکرار می‌شود</span>
+                یه چرخه‌ی ساده که<br />
+                <span className="text-accent">هر هفته تکرار می‌شه</span>
               </h2>
-              <p className="mt-6 opacity-60 leading-7 text-sm max-w-[520px]">
-                اول تو را می‌شناسم، بعد برنامه می‌نویسم. هر شب عددهای واقعی‌ات را در گزارشکار می‌بینم و هفته بعد برنامه را با همان عددها اصلاح می‌کنم.
-              </p>
 
               <div className="mt-8 grid grid-cols-3 gap-3">
                 {[
                   { k: 'هر شب', l: 'گزارشکار روزانه' },
-                  { k: 'هر هفته', l: 'تماس و بازنویسی برنامه' },
-                  { k: '۶ درس', l: 'عمومی و تخصصی' },
+                  { k: 'هر هفته', l: 'تماس و اصلاح برنامه' },
+                  { k: 'دروس', l: 'عمومی و تخصصی' },
                 ].map((s) => (
                   <div key={s.l} className="bg-white text-black rounded-2xl p-4">
                     <div className="font-black text-sm">{s.k}</div>
@@ -430,9 +393,9 @@ export default function App() {
 
           <div className="space-y-5">
             {[
-              { n: '۰۱', t: 'شناخت کامل', d: 'پیش از شروع، فرم شناخت دقیق از وضعیت درسی، ساعت خواب، مدرسه و آزمون‌های قبلی پر می‌شود تا برنامه واقعاً برای تو نوشته شود.', tags: ['فرم شناخت', 'تحلیل کارنامه', 'اهداف'] },
-              { n: '۰۲', t: 'برنامه اختصاصی', d: 'برنامه هفتگی با ساعت مطالعه افزایشی و پیوسته (قابل تنظیم)، تقسیم دروس زیست، شیمی، ریاضی، فیزیک، زمین و عمومی، و مباحث مشخص برای هر درس.', tags: ['ساعت‌بندی', 'مباحث هر درس', 'جمع‌بندی'] },
-              { n: '۰۳', t: 'پیگیری و گزارشکار روزانه', d: 'گزارشکار روزانه شامل تعداد تست به تفکیک درس، ساعت مطالعه هر درس، ساعت خواب و بیداری، استراحت و تایم گوشی. بر اساس آن برنامه هفته بعد بازنویسی می‌شود.', tags: ['گزارش روزانه', 'تماس هفتگی', 'اصلاح برنامه'] },
+              { n: '۰۱', t: 'شناخت کامل', d: 'قبل از شروع، یه فرم شناخت پر می‌کنی: وضعیت درسی، ساعت خواب، مدرسه و آزمون‌های قبلی. این‌جوری برنامه واقعاً برای خودت نوشته می‌شه.', tags: ['فرم شناخت', 'تحلیل کارنامه', 'اهداف'] },
+              { n: '۰۲', t: 'برنامه اختصاصی', d: 'برنامه هفتگی با ساعت مطالعه‌ای که کم‌کم بالا می‌ره و قابل تنظیمه. دروس عمومی و تخصصی بینشون تقسیم می‌شن و برای هر درس مبحث، منبع و حجم مشخصه.', tags: ['ساعت‌بندی', 'مباحث هر درس', 'جمع‌بندی'] },
+              { n: '۰۳', t: 'پیگیری و گزارشکار روزانه', d: 'هر شب تعداد تست و ساعت مطالعه‌ی هر درس، ساعت خواب و بیداری، استراحت و تایم گوشی‌ات رو می‌نویسی. من بررسی می‌کنم، آخر هفته آزمون می‌گیرم و برنامه‌ی هفته‌ی بعد رو بر اساس نتیجه درست می‌کنم.', tags: ['گزارش روزانه', 'آزمون هفتگی', 'اصلاح برنامه'] },
             ].map((c, i) => (
               <Reveal key={c.n} delay={i * 100}>
                 <div className="bg-white/[0.04] border border-white/10 rounded-[24px] p-7">
@@ -451,8 +414,8 @@ export default function App() {
             <Reveal delay={350}>
               <div className="rounded-[24px] border border-accent/30 bg-[#0F0F14] p-6 flex items-center justify-between gap-4 flex-wrap">
                 <div>
-                  <div className="font-black">یک هفته از برنامه را ببین</div>
-                  <div className="text-xs opacity-60 mt-1">ساعت‌بندی روزانه‌ی هر درس</div>
+                  <div className="font-black">یه هفته از برنامه رو ببین</div>
+                  <div className="text-xs opacity-60 mt-1">ساعت‌بندی، منبع و حجم هر درس</div>
                 </div>
                 <a href="#sample" className="bg-accent text-black px-5 py-3 rounded-full text-xs font-black">مشاهده ↓</a>
               </div>
@@ -470,7 +433,7 @@ export default function App() {
             </div>
             <h2 className="mt-4 text-[36px] lg:text-[52px] font-black leading-none">انتخاب مسیرت</h2>
             <p className="mt-3 text-sm opacity-60 max-w-[640px] leading-6">
-              هزینه‌ها ماهانه و بدون تخفیف است. امکانات هر سطح کامل نوشته شده؛ در سطوح ۲ و ۳ همه امکانات سطوح قبلی نیز وجود دارد.
+              هزینه‌ها ماهانه‌ست. امکانات هر سطح رو کامل نوشتم؛ سطح ۲ و ۳ همه‌ی امکانات سطح‌های قبلی رو هم دارن.
             </p>
           </Reveal>
         </div>
@@ -523,7 +486,7 @@ export default function App() {
                 <div className="inline-flex text-[11px] bg-white text-black px-3 py-1 rounded-full font-black">مشاوره تک‌جلسه</div>
                 <h3 className="mt-4 text-2xl lg:text-3xl font-black leading-tight">یک جلسه، بدون تعهد</h3>
                 <p className="mt-3 text-sm opacity-70 leading-6">
-                  اگر هنوز مطمئن نیستی، یک جلسه {toFa(SINGLE_SESSION.duration)}‌ای با هزینه {toFa(SINGLE_SESSION.price)} هزار تومان داشته باش.
+                  اگه هنوز مطمئن نیستی، یه جلسه‌ی {SINGLE_SESSION.duration}‌ای با هزینه‌ی {toFa(SINGLE_SESSION.price)} هزار تومان داشته باش.
                 </p>
               </div>
               <div className="bg-[#0F0F14] border border-white/10 rounded-3xl p-6">
@@ -553,7 +516,7 @@ export default function App() {
             <div className="mt-8 bg-white/[0.04] border border-white/10 rounded-[24px] p-6 lg:p-8">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <h4 className="font-black text-lg">گزارشکار روزانه (همه سطوح)</h4>
-                <span className="text-xs opacity-60">هر هفته بر اساس گزارش‌های روزانه، برنامه اصلاح می‌شود</span>
+                <span className="text-xs opacity-60">هر هفته برنامه بر اساس گزارش‌های روزانه‌ات اصلاح می‌شه</span>
               </div>
               <div className="mt-5 grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
                 {REPORT_FIELDS.map((f) => (
@@ -568,41 +531,45 @@ export default function App() {
           {/* Comparison */}
           <Reveal>
             <div className="mt-8 bg-white rounded-[24px] overflow-hidden text-black">
-              <div className="px-6 lg:px-8 py-6 border-b border-black/5">
+              <div className="px-5 sm:px-8 py-5 border-b border-black/5">
                 <h4 className="font-black text-lg">مقایسه سریع سطوح</h4>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-[12px] sm:text-sm">
-                  <thead className="bg-zinc-50 text-xs opacity-70">
-                    <tr>
-                      <th className="text-right p-3 sm:p-4 font-bold">امکانات</th>
-                      <th className="p-2 sm:p-4 whitespace-nowrap">سطح ۱</th>
-                      <th className="p-2 sm:p-4 bg-accent/20 whitespace-nowrap">سطح ۲</th>
-                      <th className="p-2 sm:p-4 whitespace-nowrap">سطح ۳</th>
+              <table className="w-full table-fixed text-[12px] sm:text-sm">
+                <colgroup>
+                  <col />
+                  <col className="w-[17%] sm:w-[15%]" />
+                  <col className="w-[17%] sm:w-[15%]" />
+                  <col className="w-[17%] sm:w-[15%]" />
+                </colgroup>
+                <thead className="bg-zinc-50 text-[11px] sm:text-xs">
+                  <tr>
+                    <th className="text-right py-3 pr-4 pl-1 sm:p-4 font-bold">امکانات</th>
+                    <th className="py-3 px-0.5 sm:p-4 font-bold">سطح ۱</th>
+                    <th className="py-3 px-0.5 sm:p-4 font-bold bg-accent/20">سطح ۲</th>
+                    <th className="py-3 px-0.5 sm:p-4 font-bold">سطح ۳</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    ['برنامه اختصاصی هفتگی / ماهانه', '✓', '✓', '✓'],
+                    ['مشاوره دقیق و شخصی‌سازی‌شده', '✓', '✓', '✓'],
+                    ['تماس هفتگی + گزارشکار روزانه', '✓', '✓', '✓'],
+                    ['تحلیل آزمون، دبیر و منبع', '✓', '✓', '✓'],
+                    ['برنامه ویژه دروس عمومی و تخصصی', '✓', '✓', '✓'],
+                    ['آموزش کامل مسیر کنکور', '✓', '✓', '✓'],
+                    ['آزمون هفتگی شخصی‌سازی‌شده', '—', '✓', '✓'],
+                    ['رفع اشکال', '—', '—', '✓'],
+                    ['هزینه ماهانه (میلیون تومان)', '۱٫۸', '۲٫۴', '۳٫۲'],
+                  ].map((row, i) => (
+                    <tr key={i} className="border-t border-black/5">
+                      <td className="py-3 pr-4 pl-1 sm:p-4 font-medium leading-5">{row[0]}</td>
+                      {[1, 2, 3].map((c) => (
+                        <td key={c} className={`py-3 px-0.5 sm:p-4 text-center ${c === 2 ? 'bg-accent/10 font-black' : ''} ${row[c] === '—' ? 'text-black/30' : ''} ${i === 8 ? 'font-black' : ''}`}>{row[c]}</td>
+                      ))}
                     </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      ['برنامه اختصاصی هفتگی / ماهانه', '✓', '✓', '✓'],
-                      ['مشاوره دقیق و شخصی‌سازی‌شده', '✓', '✓', '✓'],
-                      ['تماس هفتگی + گزارشکار روزانه', '✓', '✓', '✓'],
-                      ['تحلیل آزمون، دبیر و منبع', '✓', '✓', '✓'],
-                      ['برنامه ویژه برای دروس عمومی و تخصصی', '✓', '✓', '✓'],
-                      ['آموزش کامل مسیر کنکور', '✓', '✓', '✓'],
-                      ['آزمون هفتگی شخصی‌سازی‌شده', '—', '✓', '✓'],
-                      ['رفع اشکال', '—', '—', '✓'],
-                      ['هزینه ماهانه', '۱.۸ م', '۲.۴ م', '۳.۲ م'],
-                    ].map((row, i) => (
-                      <tr key={i} className="border-t border-black/5">
-                        <td className="p-3 sm:p-4 font-medium leading-5">{row[0]}</td>
-                        <td className="p-2 sm:p-4 text-center whitespace-nowrap">{row[1]}</td>
-                        <td className="p-2 sm:p-4 text-center bg-accent/10 font-black whitespace-nowrap">{row[2]}</td>
-                        <td className="p-2 sm:p-4 text-center whitespace-nowrap">{row[3]}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </Reveal>
         </div>
@@ -613,21 +580,22 @@ export default function App() {
         <div className="max-w-[1280px] mx-auto px-6 lg:px-8">
           <Reveal>
             <div className="text-xs text-accent font-bold">نمونه برنامه</div>
-            <h2 className="mt-3 text-[32px] lg:text-[44px] font-black leading-none">نمونه برنامه هفتگی</h2>
-            <p className="mt-4 text-sm opacity-60 leading-6 max-w-[720px]">
-              این یک نمونه آموزشی از یک هفته‌ی میانی دوره است. در برنامه‌ی واقعی، ساعت مطالعه به‌تدریج بالا می‌رود و بر اساس شرایط تو تنظیم می‌شود.
+            <h2 className="mt-3 text-[32px] lg:text-[44px] font-black leading-none">یه هفته از برنامه، کامل</h2>
+            <p className="mt-4 text-sm opacity-60 leading-7 max-w-[720px]">
+              این یه نمونه از یه هفته‌ی میانی دوره‌ست: شنبه تا پنجشنبه درس و تست، جمعه هم مرور و آزمون. تو برنامه‌ی واقعی خودت، ساعت‌ها، منابع و حجم درس‌ها بر اساس شرایط تو چیده می‌شه.
             </p>
           </Reveal>
 
           {/* Weekly totals */}
           <Reveal>
-            <div className="mt-10 grid grid-cols-3 gap-3">
+            <div className="mt-10 grid grid-cols-2 lg:grid-cols-4 gap-3">
               {[
-                { k: toFa(AVG_DAILY_HOURS), l: 'میانگین ساعت مطالعه روزانه' },
-                { k: toFa(WEEK_TOTAL_HOURS), l: 'ساعت مطالعه هفته' },
-                { k: toFa(AVG_PHONE), l: 'میانگین تایم گوشی (ساعت)' },
+                { k: toFa(WEEK_TOTAL_HOURS), l: 'ساعت مطالعه در هفته' },
+                { k: toFa(AVG_DAILY_HOURS), l: 'ساعت مطالعه در روز (شنبه تا پنجشنبه)' },
+                { k: toFa(SUBJECT_PLANS.length), l: 'درس تخصصی در این نمونه' },
+                { k: 'جمعه', l: 'روز مرور و آزمون' },
               ].map((c) => (
-                <div key={c.l} className="bg-white text-black rounded-2xl p-4">
+                <div key={c.l} className="bg-white/[0.04] border border-white/10 rounded-2xl p-4">
                   <div className="text-2xl font-black">{c.k}</div>
                   <div className="text-[11px] opacity-60 mt-1 leading-4">{c.l}</div>
                 </div>
@@ -635,121 +603,110 @@ export default function App() {
             </div>
           </Reveal>
 
-          {/* Subject totals bars */}
+          {/* Weekly board */}
           <Reveal>
-            <div className="mt-6 bg-white text-black rounded-[32px] p-6 lg:p-8">
-              <div className="flex items-center justify-between flex-wrap gap-3">
-                <h3 className="font-black text-lg">جمع ساعت مطالعه‌ی هفته به تفکیک درس</h3>
+            <div className="mt-10">
+              <h3 className="font-black text-lg">ساعت‌بندی هفته</h3>
+
+              {/* day tabs: only on small screens, all days are visible at once on desktop */}
+              <div className="mt-4 grid grid-cols-4 gap-2 lg:hidden" role="tablist" aria-label="روزهای هفته">
+                {ALL_DAYS.map((d, i) => (
+                  <button
+                    key={d}
+                    role="tab"
+                    aria-selected={sampleDay === i}
+                    onClick={() => setSampleDay(i)}
+                    className={`py-2.5 rounded-full text-xs font-bold border transition focus-visible:outline-2 focus-visible:outline-accent ${sampleDay === i ? 'bg-accent text-black border-accent' : 'border-white/15 text-white/80'}`}
+                  >
+                    {d}
+                  </button>
+                ))}
               </div>
-              <div className="mt-6 grid gap-6">
-                <div className="space-y-4">
-                  <div className="text-xs font-black opacity-60">ساعت مطالعه</div>
-                  {(Object.keys(SUBJECTS) as SubjectKey[]).map((k) => {
-                    const total = subjectTotals(k)
-                    return (
-                      <div key={k} className="flex items-center gap-3 text-xs">
-                        <span className="w-14 font-bold">{SUBJECTS[k].label}</span>
-                        <div className="flex-1 h-3 bg-black/5 rounded-full overflow-hidden">
-                          <div className={`h-full ${SUBJECTS[k].bar} rounded-full`} style={{ width: `${(total / MAX_SUBJ_HOURS) * 100}%` }} />
+
+              <div className="mt-4 grid lg:grid-cols-7 gap-3">
+                {STUDY_DAYS.map((d, i) => (
+                  <div key={d} className={`${sampleDay === i ? 'block' : 'hidden'} lg:block rounded-[20px] border border-white/10 bg-white/[0.04] p-4`}>
+                    <div className="flex items-center justify-between gap-2 pb-3 border-b border-white/10">
+                      <div className="font-black text-sm">{d}</div>
+                      <div className="text-[11px] bg-white/10 px-2 py-0.5 rounded-full whitespace-nowrap">{toFa(dayTotal(i))} ساعت</div>
+                    </div>
+                    <div className="mt-4 space-y-4">
+                      {SUBJECT_PLANS.map((sp) => (
+                        <div key={sp.label}>
+                          <div className="flex items-baseline justify-between gap-2 text-[13px]">
+                            <span className="font-bold">{sp.label}</span>
+                            <span className="text-xs opacity-60 whitespace-nowrap">{toFa(sp.hours[i])} ساعت</span>
+                          </div>
+                          <div className="mt-1.5 h-1 rounded-full bg-white/10 overflow-hidden">
+                            <div className="h-full rounded-full bg-accent" style={{ width: `${(sp.hours[i] / MAX_BLOCK_HOURS) * 100}%` }} />
+                          </div>
                         </div>
-                        <span className="w-12 text-left font-black">{toFa(total)}</span>
-                      </div>
-                    )
-                  })}
+                      ))}
+                    </div>
+                  </div>
+                ))}
+
+                <div className={`${sampleDay === FRIDAY_INDEX ? 'block' : 'hidden'} lg:block rounded-[20px] border border-accent/30 bg-accent/[0.06] p-4`}>
+                  <div className="flex items-center justify-between gap-2 pb-3 border-b border-white/10">
+                    <div className="font-black text-sm">جمعه</div>
+                    <div className="text-[11px] bg-accent text-black font-bold px-2 py-0.5 rounded-full whitespace-nowrap">روز مرور</div>
+                  </div>
+                  <ul className="mt-4 space-y-3 text-[13px] leading-5">
+                    {FRIDAY_PLAN.steps.map((st) => (
+                      <li key={st} className="flex gap-2 items-start">
+                        <span className="mt-1.5 w-1.5 h-1.5 shrink-0 rounded-full bg-accent" />
+                        <span>{st}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             </div>
           </Reveal>
 
-          {/* Day selector */}
+          {/* Detailed per-subject plan */}
           <Reveal>
-            <div className="mt-8 bg-white text-black rounded-[32px] p-6 lg:p-8">
-              <div className="flex gap-2 overflow-x-auto pb-2">
-                {SAMPLE_WEEK.map((d, i) => (
-                  <button key={d.day} onClick={() => setSampleDay(i)} className={`px-4 py-3 rounded-full text-xs font-black whitespace-nowrap transition border ${sampleDay === i ? 'bg-black text-white border-black' : 'bg-zinc-100 border-black/5 hover:bg-zinc-200'}`}>
-                    {d.day}
-                    <span className="opacity-60 font-normal mr-1">• {toFa(dayTotalHours(d))} ساعت</span>
-                  </button>
+            <div className="mt-14">
+              <h3 className="font-black text-lg">برنامه‌ی تفصیلی هر درس</h3>
+              <p className="mt-1 text-xs opacity-60">منبع، حجم و کارهای هفته برای هر درس</p>
+
+              <div className="mt-5 grid md:grid-cols-2 gap-4">
+                {SUBJECT_PLANS.map((sp) => (
+                  <div key={sp.label} className="rounded-[24px] border border-white/10 bg-white/[0.04] p-6">
+                    <div className="flex items-center justify-between gap-3">
+                      <h4 className="font-black text-lg">{sp.label}</h4>
+                      <span className="text-[11px] bg-white/10 px-2.5 py-1 rounded-full whitespace-nowrap">{toFa(subjectTotal(sp))} ساعت در هفته</span>
+                    </div>
+                    <dl className="mt-4">
+                      {sp.details.map(([label, value]) => (
+                        <div key={label} className="grid grid-cols-[4.5rem_1fr] gap-3 py-2.5 border-t border-white/5 text-sm leading-6">
+                          <dt className="text-xs opacity-50 pt-0.5">{label}</dt>
+                          <dd className="opacity-90">{value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
                 ))}
-              </div>
 
-              <div className="mt-6 grid lg:grid-cols-[1.1fr_0.9fr] gap-6">
-                {/* Blocks */}
-                <div className="bg-zinc-50 border border-black/5 rounded-3xl p-6">
-                  <div className="flex items-center justify-between flex-wrap gap-3">
-                    <div>
-                      <div className="text-xs opacity-60">روز</div>
-                      <div className="text-2xl font-black">{day.day}</div>
-                    </div>
-                    <div className="flex gap-2 flex-wrap">
-                      <div className="bg-black text-white px-3 py-1.5 rounded-full text-xs font-bold">شروع: {toFa(day.start)}</div>
-                      <div className="bg-black text-white px-3 py-1.5 rounded-full text-xs font-bold">بیداری: {toFa(day.wake)}</div>
-                      <div className="bg-black text-white px-3 py-1.5 rounded-full text-xs font-bold">خواب: {toFa(day.sleep)}</div>
-                    </div>
+                <div className="md:col-span-2 rounded-[24px] border border-accent/30 bg-accent/[0.06] p-6">
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <h4 className="font-black text-lg">جمعه: مرور و جمع‌بندی</h4>
+                    <span className="text-xs opacity-60">جمعه برای مرور و آماده شدن برای هفته‌ی بعده</span>
                   </div>
-
-                  <div className="mt-6 space-y-3">
-                    {day.blocks.map((b, i) => (
-                      <div key={i} className="bg-white border border-black/5 rounded-2xl p-4">
-                        <div className="flex items-center justify-between gap-3 flex-wrap">
-                          <div className="flex items-center gap-2">
-                            <span className={`w-2.5 h-2.5 rounded-full ${SUBJECTS[b.subject].dot}`} />
-                            <span className="font-black text-sm">{SUBJECTS[b.subject].label}</span>
-                          </div>
-                          <div className="flex gap-2">
-                            <span className="text-[11px] bg-zinc-100 px-2 py-1 rounded-full font-bold">{toFa(b.hours)} ساعت مطالعه</span>
-                          </div>
-                        </div>
-                        <div className="mt-3 h-1.5 bg-black/5 rounded-full overflow-hidden">
-                          <div className={`h-full ${SUBJECTS[b.subject].bar} rounded-full`} style={{ width: `${(b.hours / dayTotalHours(day)) * 100}%` }} />
-                        </div>
+                  <dl className="mt-4 md:grid md:grid-cols-2 md:gap-x-10">
+                    {FRIDAY_PLAN.details.map(([label, value]) => (
+                      <div key={label} className="grid grid-cols-[4.5rem_1fr] gap-3 py-2.5 border-t border-white/5 text-sm leading-6">
+                        <dt className="text-xs opacity-50 pt-0.5">{label}</dt>
+                        <dd className="opacity-90">{value}</dd>
                       </div>
                     ))}
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-2 gap-2 text-center text-xs">
-                    <div className="bg-white border border-black/5 rounded-xl py-2.5">
-                      <div className="font-black text-sm">{toFa(dayTotalHours(day))} ساعت</div>
-                      <div className="opacity-60 text-[10px]">مطالعه کل</div>
-                    </div>
-                    <div className="bg-white border border-black/5 rounded-xl py-2.5">
-                      <div className="font-black text-sm">{toFa(day.phone)} ساعت</div>
-                      <div className="opacity-60 text-[10px]">گوشی</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Daily metrics */}
-                <div className="bg-zinc-50 border border-black/5 rounded-3xl p-6">
-                  <div className="text-xs opacity-60 font-bold">خلاصه روز</div>
-                  <div className="mt-4 space-y-3">
-                    {day.blocks.map((b, i) => (
-                      <div key={i} className="flex items-center gap-3 text-xs">
-                        <span className="w-14 font-bold">{SUBJECTS[b.subject].label}</span>
-                        <div className="flex-1 h-2 bg-black/5 rounded-full overflow-hidden">
-                          <div className={`h-full ${SUBJECTS[b.subject].bar} rounded-full`} style={{ width: `${(b.hours / dayTotalHours(day)) * 100}%` }} />
-                        </div>
-                        <span className="w-16 text-left opacity-70">{toFa(b.hours)} ساعت</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-6 grid grid-cols-2 gap-3">
-                    <div className="bg-white border border-black/5 rounded-2xl p-4">
-                      <div className="text-[11px] opacity-60">استراحت بین بلوک‌ها</div>
-                      <div className="font-black text-sm mt-1">۱۵-۲۰ دقیقه</div>
-                    </div>
-                    <div className="bg-white border border-black/5 rounded-2xl p-4">
-                      <div className="text-[11px] opacity-60">زمان مرور شبانه</div>
-                      <div className="font-black text-sm mt-1">۳۰ دقیقه</div>
-                    </div>
-                    <div className="bg-white border border-black/5 rounded-2xl p-4 col-span-2">
-                      <div className="text-[11px] opacity-60">جمعه</div>
-                      <div className="font-black text-sm mt-1">مرور هفته + اصلاح اشتباهات</div>
-                    </div>
-                  </div>
+                  </dl>
                 </div>
               </div>
+
+              <p className="mt-5 text-xs opacity-50 leading-6">
+                منبع‌ها نمونه‌ان؛ تو برنامه‌ی خودت بر اساس سطح و پایه‌ات انتخاب می‌شن. دروس عمومی هم به همین شکل کنار این‌ها چیده می‌شن.
+              </p>
             </div>
           </Reveal>
         </div>
@@ -771,11 +728,11 @@ export default function App() {
                 <span className="opacity-70">علیرضا غلامی</span>
               </div>
               <h2 className="mt-6 text-[30px] lg:text-[40px] font-black leading-tight">
-                مسیر را خودم رفته‌ام؛<br />
-                <span className="text-accent">می‌دانم کجاها گیر می‌کنی.</span>
+                مسیر رو خودم رفتم؛<br />
+                <span className="text-accent">می‌دونم کجاها گیر می‌کنی.</span>
               </h2>
               <p className="mt-6 text-sm leading-7 opacity-70">
-                تجربه پشت‌کنکور را خودم گذرانده‌ام. می‌دانم برنامه سنگین چه بلایی سر انگیزه می‌آورد و می‌دانم اهمیت گزارشکار دقیق چیست. سبک مشاوره من بر اساس شناخت واقعی دانش‌آموز، برنامه قابل اجرا و پیگیری هفتگی منظم است.
+                پشت‌کنکور رو خودم گذروندم. می‌دونم یه برنامه‌ی سنگین چه بلایی سر انگیزه میاره و می‌دونم گزارشکار دقیق چقدر مهمه. سبک کار من بر پایه‌ی شناخت واقعی تو، برنامه‌ای که بشه اجراش کرد و پیگیری منظم هفتگیه.
               </p>
 
               <div className="mt-8 grid sm:grid-cols-2 gap-4">
@@ -792,7 +749,7 @@ export default function App() {
                 <div className="bg-accent text-black rounded-3xl p-5 sm:col-span-2">
                   <div className="text-xs opacity-70">تجربه</div>
                   <div className="text-lg font-black mt-1">پشت‌کنکور + مشاوره دقیق</div>
-                  <div className="text-xs opacity-80 mt-1 leading-5">همراه با آزمون‌های هفتگی روند پیشرفت را سریع‌تر می‌کند</div>
+                  <div className="text-xs opacity-80 mt-1 leading-5">آزمون‌های هفتگی کمک می‌کنن سریع‌تر پیشرفت کنی</div>
                 </div>
               </div>
 
@@ -834,7 +791,7 @@ export default function App() {
               <div className="inline-flex items-center gap-2 border border-accent/30 text-accent font-bold px-3 py-1 rounded-full text-xs">درخواست مشاوره</div>
               <h2 className="mt-4 text-[30px] lg:text-[40px] font-black leading-tight">اول یک پیام بده</h2>
               <p className="mt-4 text-sm opacity-60 leading-6">
-                فرم را پر کن، پیش‌نمایش پیام را ببین و در تلگرام ارسال کن. <span className="text-white font-bold">این فرم به‌تنهایی درخواست را ارسال نمی‌کند</span>؛ ارسال نهایی با خودت است.
+                فرم رو پر کن، پیش‌نمایش پیام رو ببین و تو تلگرام بفرست. <span className="text-white font-bold">این فرم به‌تنهایی درخواستت رو نمی‌فرسته</span>؛ ارسال نهایی با خودته.
               </p>
 
               <div className="mt-8 bg-white text-black rounded-[24px] p-6 space-y-4">
@@ -883,7 +840,7 @@ export default function App() {
                 </div>
 
                 <button onClick={() => {
-                  if (!form.name || !form.grade || !form.phone) { notify('لطفاً نام، پایه و شماره را کامل کن'); return }
+                  if (!form.name || !form.grade || !form.phone) { notify('نام، پایه و شماره‌ات رو کامل کن'); return }
                   setShowModal(true)
                 }} className="w-full bg-black text-white py-4 rounded-full font-black text-sm hover:bg-zinc-900 transition">
                   پیش‌نمایش پیام و ارسال در تلگرام ←
@@ -933,9 +890,9 @@ export default function App() {
               <button onClick={() => setShowModal(false)} className="w-8 h-8 rounded-full bg-zinc-100 grid place-items-center" aria-label="بستن">✕</button>
             </div>
             <div className="p-6">
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-xs leading-5">درخواست شما هنوز ارسال نشده است. در تلگرام باید خودت دکمه ارسال را بزنی.</div>
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-xs leading-5">درخواستت هنوز ارسال نشده. تو تلگرام باید خودت دکمه‌ی ارسال رو بزنی.</div>
               <div className="mt-4 bg-zinc-50 border border-black/5 rounded-2xl p-4 text-xs leading-6 whitespace-pre-wrap">{telegramMessage}</div>
-              <a href={`https://t.me/${TELEGRAM_ID}?text=${encodeURIComponent(telegramMessage)}`} target="_blank" rel="noreferrer" onClick={() => { setShowModal(false); notify('در تلگرام حتماً دکمه ارسال را بزن') }} className="mt-4 w-full bg-[#2AABEE] text-white py-4 rounded-full font-black text-sm text-center block">
+              <a href={`https://t.me/${TELEGRAM_ID}?text=${encodeURIComponent(telegramMessage)}`} target="_blank" rel="noreferrer" onClick={() => { setShowModal(false); notify('تو تلگرام حتماً دکمه‌ی ارسال رو بزن') }} className="mt-4 w-full bg-[#2AABEE] text-white py-4 rounded-full font-black text-sm text-center block">
                 بازکردن تلگرام و ارسال درخواست ←
               </a>
               <button onClick={() => { navigator.clipboard?.writeText(telegramMessage); notify('متن کپی شد') }} className="mt-3 w-full bg-zinc-100 py-3 rounded-full font-bold text-sm">کپی متن پیام</button>

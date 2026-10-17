@@ -13,7 +13,7 @@ const NAV_LINKS: [string, string][] = [
   ['#faq', 'سوالات متداول'],
 ]
 
-type PlanId = 'single' | 's1' | 's2' | 's3'
+type PlanId = 's1' | 's2' | 's3'
 
 const toFa = (v: number | string) =>
   String(v)
@@ -119,15 +119,12 @@ const S2_FEATURES = [
 const S3_FEATURES = [
   ...S2_FEATURES,
   'رفع اشکال تخصصی سوال‌های درسی: عکس سوال رو می‌فرستی، راه‌حل و نکته‌ش رو می‌گیری',
-  'ریشه‌یابی غلط‌های تکراری: مفهومی بوده، تستی بوده یا زمان‌بندی',
-  'رفع اشکال برنامه: اگه عقب موندی، با هم دوباره می‌چینیمش',
-  'رفع اشکال روش مطالعه و مدیریت زمان',
 ]
 
 const PLANS = [
   { id: 's1' as PlanId, name: 'سطح ۱', subtitle: 'مشاوره شخصی‌سازی‌شده + پیگیری هفتگی', price: '۱.۸', features: S1_FEATURES },
   { id: 's2' as PlanId, name: 'سطح ۲', subtitle: 'سطح ۱ + آزمون‌های هفتگی شخصی‌سازی‌شده', price: '۲.۴', features: S2_FEATURES, best: true },
-  { id: 's3' as PlanId, name: 'سطح ۳', subtitle: 'سطح ۲ + رفع اشکال تخصصی درسی و برنامه', price: '۳.۲', features: S3_FEATURES },
+  { id: 's3' as PlanId, name: 'سطح ۳', subtitle: 'سطح ۲ + رفع اشکال تخصصی سوال‌های درسی', price: '۳.۲', features: S3_FEATURES },
 ]
 
 const SINGLE_SESSION = {
@@ -152,7 +149,7 @@ const REPORT_FIELDS = [
 const FAQS = [
   {
     q: 'سطوح دوره چه فرقی با هم دارن؟',
-    a: 'سطح ۱ شامل برنامه اختصاصی، مشاوره‌ی دقیق، تماس هفتگی، گزارشکار روزانه، تحلیل آزمون، پیشنهاد دبیر، معرفی منابع و آموزش کامل مسیر کنکوره. سطح ۲ همه‌ی این‌ها رو داره، به‌علاوه‌ی آزمون‌های هفتگی شخصی‌سازی‌شده. سطح ۳ هم علاوه بر امکانات سطح ۱ و ۲، رفع اشکال تخصصی داره: سوال درسی، غلط‌های تکراری، برنامه و روش مطالعه.',
+    a: 'سطح ۱ شامل برنامه اختصاصی، مشاوره‌ی دقیق، تماس هفتگی، گزارشکار روزانه، تحلیل آزمون، پیشنهاد دبیر، معرفی منابع و آموزش کامل مسیر کنکوره. سطح ۲ همه‌ی این‌ها رو داره، به‌علاوه‌ی آزمون‌های هفتگی شخصی‌سازی‌شده. سطح ۳ هم علاوه بر امکانات سطح ۱ و ۲، رفع اشکال تخصصی سوال‌های درسی داره.',
   },
   {
     q: 'قیمت‌ها چقدره؟',
@@ -236,7 +233,6 @@ export default function App() {
   const [mobileMenu, setMobileMenu] = useState(false)
   const [sampleDay, setSampleDay] = useState(0)
   const [form, setForm] = useState({ name: '', grade: '', field: '', phone: '', goal: '' })
-  const [selectedPlan, setSelectedPlan] = useState<PlanId>('s1')
   const [showModal, setShowModal] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
 
@@ -248,17 +244,12 @@ export default function App() {
 
   const notify = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2500) }
 
-  const planLabel =
-    selectedPlan === 'single' ? 'مشاوره تک‌جلسه (۳۰ دقیقه)' :
-    PLANS.find((p) => p.id === selectedPlan)?.name ?? ''
-
   const telegramMessage = `سلام آقای غلامی، درخواست مشاوره دارم.
 نام: ${form.name}
 پایه: ${form.grade}
 رشته: ${form.field}
 هدف و شرایط فعلی: ${form.goal}
-شماره تماس: ${form.phone}
-خدمت مورد نظر: ${planLabel}`
+شماره تماس: ${form.phone}`
 
   return (
     <div id="top" className="min-h-screen bg-[#07070A] text-white selection:bg-accent selection:text-black overflow-x-hidden" style={{ fontFamily: 'Vazirmatn, sans-serif' }}>
@@ -478,7 +469,7 @@ export default function App() {
                         )
                       })}
                     </div>
-                    <button onClick={() => { setSelectedPlan(plan.id); document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }) }} className={`mt-8 w-full py-4 rounded-full font-black text-sm hover-grow ${plan.best ? 'bg-accent text-black' : 'bg-white text-black'}`}>
+                    <button onClick={() => { document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }) }} className={`mt-8 w-full py-4 rounded-full font-black text-sm hover-grow ${plan.best ? 'bg-accent text-black' : 'bg-white text-black'}`}>
                       انتخاب {plan.name} ←
                     </button>
                   </div>
@@ -491,30 +482,16 @@ export default function App() {
           <Reveal>
             <div className="mt-8 rounded-[32px] border border-accent/30 bg-[#0F0F14] p-7 lg:p-10">
               <div className="inline-flex text-[11px] bg-accent text-black px-3 py-1 rounded-full font-black">ویژه سطح ۳</div>
-              <h3 className="mt-4 text-2xl lg:text-3xl font-black leading-tight">رفع اشکال؛ <span className="text-accent">گیر کردی، رها نمی‌شی</span></h3>
-              <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                  ['سوال درسی', 'عکس سوال رو می‌فرستی؛ راه‌حل مرحله‌به‌مرحله و نکته‌ی تستی‌ش رو می‌گیری.'],
-                  ['غلط‌های تکراری', 'پیدا می‌کنیم مشکل از مفهومه، از تست زدنه یا از زمان.'],
-                  ['برنامه', 'هفته خراب شد؟ برنامه رو با شرایط واقعی‌ت دوباره می‌چینیم.'],
-                  ['روش مطالعه', 'مرور، تست و مدیریت زمانت رو اصلاح می‌کنیم.'],
-                ].map(([t, d]) => (
-                  <div key={t} className="bg-white/[0.04] border border-white/10 rounded-3xl p-5">
-                    <div className="font-black text-sm text-accent">{t}</div>
-                    <p className="mt-2 text-xs leading-6 opacity-70">{d}</p>
-                  </div>
-                ))}
-              </div>
+              <h3 className="mt-4 text-2xl lg:text-3xl font-black leading-tight">رفع اشکال <span className="text-accent">سوال‌های درسی</span></h3>
               <div className="mt-6 grid lg:grid-cols-[1fr_1.2fr] gap-4 items-stretch">
                 <div className="rounded-3xl bg-accent text-black p-6">
-                  <div className="text-xs opacity-70">نمونه، یه رفع اشکال واقعی چه شکلیه؟</div>
-                  <p className="mt-3 text-sm font-black leading-7">سوال رو می‌فرستی، فقط جواب نمی‌گیری؛ دلیل اشتباهت رو هم می‌فهمی.</p>
-                  <p className="mt-3 text-xs leading-6 opacity-80">این فقط یه نمونه‌ی ساده‌ست؛ برای هر درس و هر سوالی همین مسیر رو می‌ریم.</p>
+                  <div className="text-xs opacity-70">یه نمونه</div>
+                  <p className="mt-3 text-sm font-black leading-7">عکس سوال رو می‌فرستی و راه‌حل و نکته‌ش رو می‌گیری.</p>
                 </div>
                 <div className="rounded-3xl bg-white/[0.04] border border-white/10 p-5 space-y-3 text-[13px] leading-6">
-                  <div className="max-w-[85%] bg-white text-black rounded-2xl rounded-tr-sm px-4 py-3">این تست شیمی رو دوبار حل کردم و هر دفعه گزینه‌ی ۲ می‌شه. کجاش رو اشتباه می‌رم؟ 📷</div>
-                  <div className="max-w-[90%] mr-auto bg-accent/15 border border-accent/30 rounded-2xl rounded-tl-sm px-4 py-3">راه‌حلت تا نصفه درسته. جایی که جرم مولی رو حساب کردی، میانگین ایزوتوپ‌ها رو نگرفتی. بیا قدم‌به‌قدم بریم؛ آخرش یه نکته‌ی تستی هم برات می‌نویسم که دفعه‌ی بعد تو ثانیه‌ها حلش کنی.</div>
-                  <div className="max-w-[70%] bg-white text-black rounded-2xl rounded-tr-sm px-4 py-3">آهان فهمیدم! 🙏</div>
+                  <div className="max-w-[85%] bg-white text-black rounded-2xl rounded-tr-sm px-4 py-3">این تست شیمی رو دو بار حل کردم، هر دو بار می‌شه گزینه ۲. کجاشو اشتباه می‌رم؟</div>
+                  <div className="max-w-[90%] mr-auto bg-accent/15 border border-accent/30 rounded-2xl rounded-tl-sm px-4 py-3">تا جایی که جرم مولی رو حساب کردی درست رفتی. اونجا برای جرم اتمی باید میانگین ایزوتوپ‌ها رو می‌ذاشتی، نه جرم یکی‌شون رو. اصلاحش کن و دوباره حل کن، ببین چی در میاد.</div>
+                  <div className="max-w-[70%] bg-white text-black rounded-2xl rounded-tr-sm px-4 py-3">آها، شد گزینه ۳. ممنون</div>
                 </div>
               </div>
             </div>
@@ -536,7 +513,7 @@ export default function App() {
                     <div className="text-xs opacity-60">مدت جلسه: {SINGLE_SESSION.duration}</div>
                     <div className="text-3xl font-black mt-1">{toFa(SINGLE_SESSION.price)} هزار تومان</div>
                   </div>
-                  <button onClick={() => { setSelectedPlan('single'); document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }) }} className="bg-white text-black px-6 py-3 rounded-full font-black text-sm hover-grow">
+                  <button onClick={() => { document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }) }} className="bg-white text-black px-6 py-3 rounded-full font-black text-sm hover-grow">
                     رزرو جلسه ←
                   </button>
                 </div>
@@ -865,20 +842,6 @@ export default function App() {
                   <span className="text-xs font-bold">هدف و شرایط فعلی</span>
                   <textarea value={form.goal} onChange={(e) => setForm({ ...form, goal: e.target.value })} rows={3} placeholder="مثلاً: دوازدهم تجربی، تراز ۶۰۰۰، مشکل اصلی فیزیک و مدیریت زمان..." className="w-full bg-zinc-50 border border-black/10 rounded-2xl px-4 py-3 text-sm outline-none resize-none" />
                 </label>
-
-                <div className="bg-zinc-50 border border-black/5 rounded-2xl p-4">
-                  <div className="text-xs font-black">خدمت مورد نظر</div>
-                  <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <button onClick={() => setSelectedPlan('single')} className={`p-3 rounded-2xl border text-xs font-bold leading-5 transition ${selectedPlan === 'single' ? 'bg-black text-white border-black' : 'bg-white border-black/10 hover:bg-zinc-100'}`}>
-                      تک‌جلسه<br /><span className="opacity-60 font-normal">۳۰۰ هزار</span>
-                    </button>
-                    {PLANS.map((p) => (
-                      <button key={p.id} onClick={() => setSelectedPlan(p.id)} className={`p-3 rounded-2xl border text-xs font-bold leading-5 transition ${selectedPlan === p.id ? 'bg-black text-white border-black' : 'bg-white border-black/10 hover:bg-zinc-100'}`}>
-                        {p.name}<br /><span className="opacity-60 font-normal">{toFa(p.price)} م / ماه</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
 
                 <button onClick={() => {
                   if (!form.name || !form.grade || !form.phone) { notify('نام، پایه و شماره‌ات رو کامل کن'); return }
